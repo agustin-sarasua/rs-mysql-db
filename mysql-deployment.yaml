@@ -1,20 +1,23 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql
+  name: rs-mysql
+  labels:
+    app: wordpress
 spec:
   ports:
-  - port: 3306
+    - port: 3306
   selector:
-    app: mysql
+    app: wordpress
+    tier: mysql
   clusterIP: None
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mysql-pv-claim
-  annotations:
-    volume.beta.kubernetes.io/storage-class: ""
+  labels:
+    app: wordpress
 spec:
   accessModes:
     - ReadWriteOnce
@@ -22,28 +25,34 @@ spec:
     requests:
       storage: 20Gi
 ---
-apiVersion: apps/v1beta2 # for versions before 1.8.0 use apps/v1beta1
+apiVersion: apps/v1beta2 # for versions before 1.9.0 use apps/v1beta2
 kind: Deployment
 metadata:
-  name: mysql
+  name: rs-mysql
+  labels:
+    app: wordpress
 spec:
   selector:
     matchLabels:
-      app: mysql
+      app: wordpress
+      tier: mysql
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: mysql
+        app: wordpress
+        tier: mysql
     spec:
       containers:
       - image: mysql:5.6
         name: mysql
         env:
-          # Use secret in real usage
         - name: MYSQL_ROOT_PASSWORD
-          value: root
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
         ports:
         - containerPort: 3306
           name: mysql

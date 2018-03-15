@@ -1,4 +1,9 @@
+kubectl create secret generic mysql-pass --from-literal=password=root
+
 kubectl create -f mysql-deployment.yaml
 
-kubectl run -it --rm --image=mysql:5.6 --restart=Never mysql-client -- mysql -h mysql -proot
+kubectl get pods
+
+kubectl exec -it rs-mysql-<ALGO> -- mysql -uroot -proot
+
 mysql> CREATE DATABASE rs_db
